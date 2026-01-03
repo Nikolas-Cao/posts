@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ComfyUI Demo — 文本到图片</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#7c5cff;--muted:#9aa4b2;color-scheme:dark}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:linear-gradient(180deg,#071226 0%,#07172b 100%);color:#e6eef8}
+    .wrap{max-width:900px;margin:48px auto;padding:28px;background:rgba(255,255,255,0.02);border-radius:12px;box-shadow:0 6px 24px rgba(2,6,23,0.6)}
+    h1{margin:0 0 12px;font-size:20px}
+    p.lead{color:var(--muted);margin:0 0 18px}
+    .controls{display:flex;gap:12px;margin-bottom:16px}
+    textarea{flex:1;min-height:96px;background:transparent;border:1px solid rgba(255,255,255,0.06);padding:12px;border-radius:8px;color:inherit;resize:vertical}
+    button{background:linear-gradient(90deg,var(--accent),#5a8bff);border:0;color:white;padding:10px 16px;border-radius:8px;cursor:pointer}
+    button:disabled{opacity:.6;cursor:default}
+    .output{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+    .preview{background:#071029;border-radius:8px;padding:12px;min-height:240px;display:flex;align-items:center;justify-content:center}
+    .preview img{max-width:100%;max-height:520px;border-radius:6px}
+    .aside{font-size:13px;color:var(--muted);padding:12px;background:rgba(255,255,255,0.02);border-radius:8px}
+    .notice{margin-top:12px;color:var(--muted)}
+    .spinner{width:18px;height:18px;border:3px solid rgba(255,255,255,0.08);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>ComfyUI Demo — 文本到图片（演示）</h1>
+    <p class="lead">输入文本提示（prompt），点击「生成」，页面会把请求发送到后端并展示返回的图片（后端接口示例：<code>/api/generate-image</code>）。</p>
+
+    <form id="promptForm">
+      <div class="controls">
+        <textarea id="prompt" placeholder="在这里输入你的描述，例如：一只在星空下飞翔的蓝色狐狸，数字艺术，高清"></textarea>
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
+          <button id="submitBtn" type="submit">生成</button>
+          <button id="clearBtn" type="button" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)">清除</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="output">
+      <div class="preview" id="preview">
+        <div id="placeholder">等待生成的图片会显示在这里</div>
+      </div>
+      <aside class="aside">
+        <strong>请求信息</strong>
+        <div id="status" style="margin-top:8px;color:var(--muted)">空闲</div>
+        <div class="notice">后端尚未实现时，页面不会真正生成图片。后端应接受 POST JSON 并返回 <code>{"image":"data:image/png;base64,..."}</code> 或 <code>{"imageUrl":"https://..."}</code>。</div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('promptForm');
+    const promptEl = document.getElementById('prompt');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusEl = document.getElementById('status');
+    const preview = document.getElementById('preview');
+
+    const API_ENDPOINT = 'http://127.0.0.1:7627/api/generate-image'; // 后端接口（示例）
+
+    clearBtn.addEventListener('click', ()=>{
+      promptEl.value = '';
+      preview.innerHTML = '<div id="placeholder">等待生成的图片会显示在这里</div>';
+      statusEl.textContent = '空闲';
+    });
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const prompt = promptEl.value.trim();
+      if(!prompt){ statusEl.textContent = '请输入文本提示'; return; }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span> 生成中';
+      statusEl.textContent = '请求发送中...';
+      preview.innerHTML = '';
+
+      try{
+        const res = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        if(!res.ok) throw new Error('网络错误: ' + res.status);
+
+        const data = await res.json();
+
+        // 支持两种后端返回格式：{image: 'data:image/...'} 或 {imageUrl: 'https://...'}
+        let src = null;
+        if(data.image) src = data.image;
+        else if(data.imageUrl) src = data.imageUrl;
+
+        if(!src) throw new Error('后端未返回图片字段 (image/imageUrl)');
+
+        const img = document.createElement('img');
+        img.alt = prompt;
+        img.src = src;
+        img.onload = ()=>{ statusEl.textContent = '生成完成'; };
+        img.onerror = ()=>{ statusEl.textContent = '图片加载失败'; };
+        preview.appendChild(img);
+      }catch(err){
+        console.error(err);
+        statusEl.textContent = '错误：' + (err.message || err);
+        preview.innerHTML = '<div style="color:#f88">无法生成图片，请检查后端接口或控制台日志。</div>';
+      }finally{
+        submitBtn.disabled = false;
+        submitBtn.textContent = '生成';
+      }
+    });
+  </script>
+</body>
+</html>
