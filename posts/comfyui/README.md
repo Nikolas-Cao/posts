@@ -2,7 +2,7 @@
 title: "ComfyUI 使用与实践"
 date: 2026-01-03
 tags: [ComfyUI, 工作流, 全栈部署, 教程]
-draft: true
+draft: false
 ---
 
 # ComfyUI 使用与实践
