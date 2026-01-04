@@ -6,26 +6,8 @@
 - 集中管理技术文章与笔记。
 - 以 Markdown 为主，便于阅读、版本控制与迁移到静态站点生成器。
 
-## 仓库结构（推荐）
-- `posts/` —— 所有博客文章的 Markdown 文件（例如：posts/2026-01-03-article.md）。
-- `images/` —— 文章中使用的图片或媒体资源。
-- `README.MD` —— 本文件，介绍仓库用途与协作规范。
-
-## 写作规范（建议）
-- 使用 UTF-8 编码与标准 Markdown 格式。
-- 每篇文章顶部建议包含 Front Matter（YAML），例如：
-
-	---
-	title: "文章标题"
-	date: 2026-01-03
-	tags: [tag1, tag2]
-	draft: false
-	---
-
-- 文件名建议使用日期前缀加短横线（YYYY-MM-DD-short-title.md），便于排序与管理。
-
-## 预览与发布
-- 如果需要在本地预览，建议使用支持 Markdown 实时预览的编辑器（VS Code 等），或用静态站点生成器（如 Hugo、Jekyll、Hexo）构建站点。
+## 文章索引
+- [ComfyUI 使用与实践](posts/comfyui/README.md)
 
 ## 许可与作者
 - 本仓库内容默认归作者所有。若希望公开许可，请在仓库根目录添加 LICENSE 文件并说明许可类型。
